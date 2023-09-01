@@ -1,0 +1,154 @@
+openapi: 3.0.0
+info:
+  title: Express Authentication API
+  description: Register or Login user and Route authorization
+  version: 1.0.0
+
+servers:
+  - url: "{protocol}://localhost:4000/api/{version}"
+    description: for localhost only
+    variables:
+      protocol:
+        enum:
+          - http
+          # - https
+        default: http
+      version:
+        enum:
+          - v1
+          # - v2
+        default: v1
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+  schemas:
+    User:
+      type: object
+      properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+        _id:
+          type: string
+        token:
+          type: string
+
+paths:
+  /register:
+    post:
+      tags:
+        - Auth
+      summary: creates new user 
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      requestBody:
+        description: Provide all fields
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstname:
+                  type: string
+                lastname:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        201:
+          description: User added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Some of the fields are missing
+          content:
+            application/json:
+              schema:
+                type: string
+                example: All fields are required
+        401:
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                type: string
+                example: User already exists
+
+  /login:
+    post:
+      tags:
+        - Auth
+      summary: login user 
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      requestBody:
+        description: Provide all fields
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: User Authenticated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'  
+        400:
+          description: Some of the fields are missing
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Field is missing / email or password is incorrect
+
+  /dashboard:
+    get:
+      tags:
+        - Routes
+      summary: provides dashboard information - secure route
+      responses:
+        200:
+          description: Authorized user only
+          content:
+            application/json:
+              schema:
+                type: string
+                example: Welcome to secret information
+                
+        
+     
+  
+

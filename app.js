@@ -8,7 +8,13 @@ const cookieParser = require("cookie-parser");
 const User = require("./model/user");
 const auth = require("./middleware/auth");
 
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs')
+
+
 const app = express();
+const swaggerDocument = YAML.load('./swagger.yaml')
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -16,7 +22,7 @@ app.get("/", (req, res) => {
   res.send("<h1>Hello from auth system</h1>");
 });
 
-app.post("/register", async (req, res) => {
+app.post("/api/v1/register", async (req, res) => {
   try {
     const { firstname, lastname, email, password } = req.body;
     if (!(email && password && firstname && lastname)) {
@@ -59,7 +65,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/api/v1/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -101,7 +107,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/dashboard", auth, (req, res) => {
+app.get("/api/v1/dashboard", auth, (req, res) => {
   res.send("Welcome to secret information");
 });
 
