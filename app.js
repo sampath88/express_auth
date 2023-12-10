@@ -1,6 +1,7 @@
 require("dotenv").config();
 require("./config/database").connect();
 const express = require("express");
+const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
@@ -8,13 +9,23 @@ const cookieParser = require("cookie-parser");
 const User = require("./model/user");
 const auth = require("./middleware/auth");
 
-const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs')
-
-
 const app = express();
-const swaggerDocument = YAML.load('./swagger.yaml')
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+const allowlist = [
+  "http://localhost:5173",
+  "https://perfect-resume-sampath88.vercel.app",
+];
+const corsOptionsDelegate = function (req, callback) {
+  console.log("cors");
+  let corsOptions;
+  if (allowlist.indexOf(req.header("Origin")) !== -1) {
+    corsOptions = { origin: true, credentials: true }; // reflect (enable) the requested origin in the CORS response
+  } else {
+    corsOptions = { origin: false }; // disable CORS for this request
+  }
+  callback(null, corsOptions); // callback expects two parameters: error and options
+};
+app.use(cors(corsOptionsDelegate));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -65,9 +76,10 @@ app.post("/api/v1/register", async (req, res) => {
   }
 });
 
-app.post("/api/v1/login", async (req, res) => {
+app.post("/auth/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
+    const email = username;
 
     if (!(email && password)) {
       res.status(400).send("Field is missing");
@@ -86,7 +98,7 @@ app.post("/api/v1/login", async (req, res) => {
           expiresIn: "2h",
         }
       );
-      user.token = token;
+      user.accessToken = token;
       user.password = undefined;
       // res.status(200).json(user);
 
@@ -97,8 +109,9 @@ app.post("/api/v1/login", async (req, res) => {
       };
       res
         .status(200)
-        .cookie("token", token, options)
-        .json({ success: true, token, user });
+        .cookie("accessToken", token, options)
+        .json({ success: true, accessToken: token, user });
+      return;
     }
 
     res.status(400).send("email or password is incorrect");
@@ -107,7 +120,7 @@ app.post("/api/v1/login", async (req, res) => {
   }
 });
 
-app.get("/api/v1/dashboard", auth, (req, res) => {
+app.get("/api/v1/user", auth, (req, res) => {
   res.send("Welcome to secret information");
 });
 
